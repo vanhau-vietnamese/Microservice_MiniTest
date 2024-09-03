@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: job-db
+spec:
+  serviceName: "job-db-service"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: job-db
+  template:
+    metadata:
+      labels:
+        app: job-db
+    spec:
+      containers:
+      - name: job_db_container
+        image: mysql:8.0.28
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MYSQL_DATABASE
+          value: jobms_db
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: DATABASE_PASSWORD
+        resources:
+          requests: 
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: job-db-storage
+          mountPath: /var/lib/mysql
+        ports:
+        - containerPort: 3306
+      volumes:
+      - name: job-db-storage
+        persistentVolumeClaim:
+          claimName: job-db-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: job-db-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 2Gi

@@ -1,0 +1,163 @@
+services:
+  company_db:
+    image: mysql:8.0.28
+    container_name: company_db_container
+    ports:
+      - "3311:3306"
+    volumes:
+      - company-db-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: companyms_db
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    networks:
+      - backend
+  company-service:
+    build:
+      context: ./companyms
+      dockerfile: Dockerfile
+    image: docker130303/microservices-company-service:latest
+    container_name: company
+    ports:
+      - "8082:8082"
+    depends_on:
+      - servicereg
+      - company_db
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+#      - SPRING_DATASOURCE_URL=jdbc:mysql://company_db_container:3306/companyms_db?createDatabaseIfNotExist=true
+#      - SPRING_DATASOURCE_USERNAME=${DATABASE_USERNAME}
+#      - SPRING_DATASOURCE_PASSWORD=${DATABASE_PASSWORD}
+    networks:
+      - backend
+
+  job_db:
+    image: mysql:8.0.28
+    container_name: job_db_container
+    ports:
+      - "3312:3306"
+    volumes:
+      - job-db-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: jobms_db
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    networks:
+      - backend
+  job-service:
+    build:
+      context: ./jobms
+      dockerfile: Dockerfile
+    container_name: job
+    image: docker130303/microservices-job-service:latest
+    ports:
+      - "8081:8081"
+    depends_on:
+      - job_db
+      - servicereg
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+  #      - SPRING_DATASOURCE_URL=jdbc:mysql://job_db_container:3306/jobms_db?createDatabaseIfNotExist=true
+  #      - SPRING_DATASOURCE_USERNAME=${DATABASE_USERNAME}
+  #      - SPRING_DATASOURCE_PASSWORD=${DATABASE_PASSWORD}
+    networks:
+      - backend
+
+  review_db:
+    image: mysql:8.0.28
+    container_name: review_db_container
+    ports:
+      - "3313:3306"
+    volumes:
+      - review-db-data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: reviewms_db
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+    networks:
+      - backend
+  review-service:
+    build:
+      context: ./reviewms
+      dockerfile: Dockerfile
+    container_name: review
+    image: docker130303/microservices-review-service:latest
+    ports:
+      - "8083:8083"
+    depends_on:
+      - review_db
+      - servicereg
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+#      - SPRING_DATASOURCE_URL=jdbc:mysql://review_db_container:3306/reviewms_db?createDatabaseIfNotExist=true
+#      - SPRING_DATASOURCE_USERNAME=${DATABASE_USERNAME}
+#      - SPRING_DATASOURCE_PASSWORD=${DATABASE_PASSWORD}
+    networks:
+      - backend
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - backend
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - backend
+  servicereg:
+    build:
+      context: ./service-reg
+      dockerfile: Dockerfile
+#    image: docker130303/servicereg
+    container_name: servicereg
+    ports:
+      - "8761:8761"
+    depends_on:
+      - rabbitmq
+      - zipkin
+    networks:
+      - backend
+  config-server-ms:
+    build:
+      context: ./configserver
+      dockerfile: Dockerfile
+#    image: docker130303/config-server-ms:latest
+    container_name: config-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      - servicereg
+    networks:
+      - backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+#    image: docker130303/gateway
+    container_name: gateway
+    ports:
+      - "8084:8084"
+    depends_on:
+      - servicereg
+    networks:
+      - backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+
+
+# create network
+networks:
+  backend:
+    name: job-app-microservices-network
+
+# create volumes
+volumes:
+  company-db-data:
+  job-db-data:
+  review-db-data:
+

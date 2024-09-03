@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: job-service
+  template:
+    metadata:
+      name: job-service
+      labels:
+        app: job-service
+    spec:
+      containers:
+      - name: job
+        image: docker130303/microservices-job-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: k8s
+      restartPolicy: Always
+ 
+        

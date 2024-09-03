@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-service-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: review-service
+  template:
+    metadata:
+      name: review-service
+      labels:
+        app: review-service
+    spec:
+      containers:
+      - name: review
+        image: docker130303/microservices-review-service:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8083
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: k8s
+      restartPolicy: Always
+ 
+        
